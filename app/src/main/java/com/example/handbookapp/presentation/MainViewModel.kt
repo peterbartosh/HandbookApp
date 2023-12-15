@@ -1,5 +1,6 @@
 package com.example.handbookapp.presentation
 
+import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,7 +22,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -100,7 +100,7 @@ class MainViewModel @Inject constructor(private val roomRepository: RoomReposito
         }
     }
 
-    fun fillOrdersProductsTable(){
+    fun fillOrdersProductsTable(onError: (String) -> Unit){
 
         val ordersProductsTableData = listOf(
             OrderProduct(
@@ -135,9 +135,19 @@ class MainViewModel @Inject constructor(private val roomRepository: RoomReposito
             )
         )
         viewModelScope.launch {
-            ordersProductsTableData.forEach {
-                roomRepository.addOrderProduct(it.toOrderProductEntity())
-            }
+            var errorOccurred = false
+            launch {
+                ordersProductsTableData.forEach {
+                    try {
+                        roomRepository.addOrderProduct(it.toOrderProductEntity())
+                    } catch (sqlE: SQLiteConstraintException) {
+                        errorOccurred = true
+                    }
+                }
+            }.join()
+
+            if (errorOccurred)
+                onError("Ошибка. Перед заполнением этой таблицы стандартным набором данных из 5 записей, вам следует заполнить таблицу заказов")
         }
     }
 
@@ -146,7 +156,6 @@ class MainViewModel @Inject constructor(private val roomRepository: RoomReposito
         val flow = when (currentPojoType){
             PojoType.Order -> roomRepository.getOrders().map { it.map { el -> el.toOrder() } }
             PojoType.OrderProduct -> roomRepository.getOrdersProducts().map { it.map { el -> el.toOrderProduct() } }
-            PojoType.NotSpecified -> emptyFlow()
         }
 
         flow.collectLatest { pojos ->
@@ -167,11 +176,16 @@ class MainViewModel @Inject constructor(private val roomRepository: RoomReposito
         }
     }
 
-    fun add(pojo: Pojo) = viewModelScope.launch {
-        if (pojo is Order)
-            roomRepository.addOrder(pojo.toOrderEntity())
-        else if (pojo is OrderProduct)
-            roomRepository.addOrderProduct(pojo.toOrderProductEntity())
+    fun add(pojo: Pojo, onError: (String) -> Unit = {}, onSuccess: () -> Unit = {}) = viewModelScope.launch {
+        try {
+            if (pojo is Order)
+                roomRepository.addOrder(pojo.toOrderEntity())
+            else if (pojo is OrderProduct)
+                roomRepository.addOrderProduct(pojo.toOrderProductEntity())
+            onSuccess()
+        } catch (sqlE: SQLiteConstraintException){
+            onError("Заказ не найден")
+        }
     }
 
     fun edit(pojo: Pojo) = viewModelScope.launch {
@@ -183,9 +197,10 @@ class MainViewModel @Inject constructor(private val roomRepository: RoomReposito
 
     fun delete(pojo: Pojo) = viewModelScope.launch {
         if (pojo is Order)
-            roomRepository.deleteOrder(pojo.toOrderEntity())
+            roomRepository.deleteOrder(pojo.toOrderEntity()).also { currentPojoType = PojoType.Order }
         else if (pojo is OrderProduct)
-            roomRepository.deleteOrderProduct(pojo.toOrderProductEntity())
+            roomRepository.deleteOrderProduct(pojo.toOrderProductEntity()).also { currentPojoType = PojoType.OrderProduct }
+
     }
 
     fun addProp(propName: String, isAsc: Boolean) = viewModelScope.launch {

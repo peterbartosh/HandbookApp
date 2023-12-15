@@ -1,6 +1,5 @@
 package com.example.handbookapp.presentation.components
 
-import android.widget.TableRow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,12 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.handbookapp.domain.Pojo
 import com.example.handbookapp.data.utils.ContentType
 import com.example.handbookapp.data.utils.convertMillisToString
 import com.example.handbookapp.data.utils.convertStringDateToMillis
 import com.example.handbookapp.domain.Order
 import com.example.handbookapp.domain.OrderProduct
+import com.example.handbookapp.domain.Pojo
 
 @Composable
 fun TableRow(
@@ -99,6 +98,15 @@ private fun OrderRow(
             .background(MaterialTheme.colorScheme.background),
         verticalAlignment = Alignment.CenterVertically
     ) {
+
+        TableCell(
+            initText = order.id.toString(),
+            enabled = false,
+            weight = 0.13f,
+            contentType = ContentType.Constant,
+            onConfirm = {}
+        )
+
         TableCell(
             initText = order.status.toString(),
             enabled = curActiveCell.first == rowInd && curActiveCell.second == 0,
@@ -178,7 +186,7 @@ private fun OrderRow(
         TableCell(
             initText = order.preferencesComment.toString(),
             enabled = curActiveCell.first == rowInd && curActiveCell.second == 4,
-            weight = 0.35f,
+            weight = 0.25f,
             singleLine = false,
             contentType = ContentType.TextField,
             validationRule = { true },
@@ -217,7 +225,7 @@ private fun OrderProductRow(
     onDelete: (Pojo) -> Unit
 ) {
 
-    val order = pojo as OrderProduct
+    val orderProduct = pojo as OrderProduct
 
     val expandDeleteDialog = remember {
         mutableStateOf(false)
@@ -227,7 +235,7 @@ private fun OrderProductRow(
         text = "Вы уверены, что хотите удалить эту строку?",
         expandDeleteDialog = expandDeleteDialog
     ) {
-        onDelete(order)
+        onDelete(orderProduct)
     }
 
 
@@ -240,7 +248,15 @@ private fun OrderProductRow(
     ) {
 
         TableCell(
-            initText = order.amount.toString(),
+            initText = orderProduct.orderId.toString(),
+            enabled = false,
+            weight = 0.13f,
+            contentType = ContentType.Constant,
+            onConfirm = {}
+        )
+
+        TableCell(
+            initText = orderProduct.amount.toString(),
             enabled = curActiveCell.first == rowInd && curActiveCell.second == 0,
             weight = 0.3f,
             keyboardType = KeyboardType.Number,
@@ -256,7 +272,7 @@ private fun OrderProductRow(
 
 
         TableCell(
-            initText = order.productName.toString(),
+            initText = orderProduct.productName.toString(),
             enabled = curActiveCell.first == rowInd && curActiveCell.second == 4,
             weight = 0.5f,
             singleLine = false,

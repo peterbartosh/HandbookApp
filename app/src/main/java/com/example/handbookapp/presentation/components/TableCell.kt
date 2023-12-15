@@ -18,10 +18,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,9 +34,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.handbookapp.data.utils.ContentType
@@ -99,6 +94,23 @@ inline fun RowScope.TableCell(
     }
 
     when (contentType){
+        ContentType.Constant -> {
+            Box(
+                modifier = Modifier
+                    //.wrapContentHeight()
+                    .weight(weight)
+                    .fillMaxHeight()
+                    .border(1.dp, if (enabled) Gold else Color.DarkGray)
+                    .background(Color.LightGray)
+                    .clickable {
+                        onNotifyCurCell()
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = initText, fontSize = 12.sp, color = Color.Black)
+            }
+
+        }
         ContentType.TextField -> {
 
             Box(
